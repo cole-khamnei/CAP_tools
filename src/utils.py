@@ -13,7 +13,6 @@ def is_interactive() -> bool:
     import __main__ as main
     return not hasattr(main, '__file__')
 
-
 if is_interactive():
     from tqdm.notebook import tqdm
 else:

@@ -8,6 +8,10 @@ import pandas as pd
 
 from nltools.stats import isc
 
+import os
+import sys
+sys.path.append(os.path.dirname(__file__))
+
 import utils, plots, clustering
 import surface_mapping as sfm
 

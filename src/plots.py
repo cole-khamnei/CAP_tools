@@ -3,6 +3,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+import os
+import sys
+sys.path.append(os.path.dirname(__file__))
+
 import utils
 import surface_mapping as sfm
 

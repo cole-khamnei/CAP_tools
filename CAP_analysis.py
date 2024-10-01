@@ -1,11 +1,8 @@
 import argparse
 import os
 
-import constants
-import utils
-import clustering
-import surface_mapping as sfm
-import pipeline
+from src import constants, utils, clustering, pipeline
+from src import surface_mapping as sfm
 
 # ------------------------------------------------------------------- #
 # --------------------   Main Specific Helpers   -------------------- #

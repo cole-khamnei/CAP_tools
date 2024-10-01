@@ -8,6 +8,9 @@ import numpy as np
 import nibabel as nb
 import surfplot as sfp
 
+import os
+import sys
+sys.path.append(os.path.dirname(__file__))
 
 import constants
 
