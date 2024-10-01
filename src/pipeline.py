@@ -8,10 +8,8 @@ import pandas as pd
 
 from nltools.stats import isc
 
-import analysis
-import plots
+import utils, plots, clustering
 import surface_mapping as sfm
-import utils
 
 from utils import color_str
 from utils import tqdm
