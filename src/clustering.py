@@ -7,10 +7,7 @@ from termcolor import colored
 from typing import List, Tuple, Optional
 
 import utils
-if utils.is_interactive():
-    from tqdm.notebook import tqdm
-else:
-    from tqdm import tqdm
+from utils import tqdm
 
 try:
     import torch

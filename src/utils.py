@@ -5,10 +5,10 @@ from termcolor import colored
 from typing import List, Tuple, Optional
 
 # ------------------------------------------------------------------- #
-# --------------------          Helpers          -------------------- #
+# --------------------          TQDM -_-         -------------------- #
 # ------------------------------------------------------------------- #
 
-
+# TODO: Find less garbage way to do this
 def is_interactive() -> bool:
     import __main__ as main
     return not hasattr(main, '__file__')
@@ -18,6 +18,11 @@ if is_interactive():
     from tqdm.notebook import tqdm
 else:
     from tqdm import tqdm
+
+
+# ------------------------------------------------------------------- #
+# --------------------          Helpers          -------------------- #
+# ------------------------------------------------------------------- #
 
 
 def color_str(string: str, color: str) -> str:
