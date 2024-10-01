@@ -2,9 +2,7 @@ import nibabel as nb
 import numpy as np
 
 from termcolor import colored
-
 from typing import List, Tuple, Optional
-
 
 # ------------------------------------------------------------------- #
 # --------------------          Helpers          -------------------- #

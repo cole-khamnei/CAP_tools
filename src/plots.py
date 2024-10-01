@@ -1,14 +1,9 @@
-import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-import seaborn as sns
+import numpy as np
 import pandas as pd
+import seaborn as sns
 
-import CAP_utils
-
-import sys
-import os
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
 import surface_mapping as sfm
 
 # ------------------------------------------------------------------- #
@@ -18,9 +13,9 @@ import surface_mapping as sfm
 
 def ISC_plot(isc_df: pd.DataFrame, isc_threshold: float, template_cifti, save_path = None, title=""):
     """ """
-    isc_values = CAP_utils.cifti_map(isc_df["roi"], isc_df["isc"], template_cifti)
+    isc_values = utils.cifti_map(isc_df["roi"], isc_df["isc"], template_cifti)
     isc_thresholded_df = isc_df.query(f"isc >= {isc_threshold}")
-    isc_thresholded_values = CAP_utils.cifti_map(isc_thresholded_df["roi"], isc_thresholded_df["isc"], template_cifti)
+    isc_thresholded_values = utils.cifti_map(isc_thresholded_df["roi"], isc_thresholded_df["isc"], template_cifti)
     
     fig = plt.figure(figsize=(12, 3))
     a1 = fig.add_axes([0.1, 0.15, 0.2, 0.80])
@@ -54,7 +49,7 @@ def create_CAP_state_plots(CAP_states: np.ndarray, CAP_labels: np.ndarray,
     fig, axes = plt.subplots(k, 1, figsize=(12, k * 3.5))
     plt.subplots_adjust(hspace=-0.0)
     for i, CAP_state in enumerate(CAP_states):
-        CAP_state_values = CAP_utils.cifti_map(ROI_labels, CAP_state, template_cifti)
+        CAP_state_values = utils.cifti_map(ROI_labels, CAP_state, template_cifti)
         ax, p = sfm.surface_plot(CAP_state_values, cmap=cmap, ax=axes[i],
                                  cbar_kws=dict(pad=-0.08)) #, color_range=[-0.75, 0.75])
         ax.set_title(f"{title} CAP State {i + 1}", y=0.83)

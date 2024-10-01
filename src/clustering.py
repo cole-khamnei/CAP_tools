@@ -4,16 +4,17 @@ import matplotlib.pyplot as plt
 
 from sklearn.cluster import KMeans
 from termcolor import colored
+from typing import List, Tuple, Optional
 
-import CAP_utils
-
-if CAP_utils.is_interactive():
+import utils
+if utils.is_interactive():
     from tqdm.notebook import tqdm
 else:
     from tqdm import tqdm
 
 try:
     import torch
+    # TODO: Change to work on CUDA and CPU as well
     assert torch.backends.mps.is_available()
     device = torch.device("mps")
     TORCH_AVAILABLE = True
@@ -21,8 +22,6 @@ try:
 except ModuleNotFoundError as e:
     TORCH_AVAILABLE = False
     print(colored("Torch package not found. Defaulting to numpy.", "yellow"))
-
-from typing import List, Tuple, Optional
 
 # ------------------------------------------------------------------- #
 # --------------------        Torch Utils        -------------------- #

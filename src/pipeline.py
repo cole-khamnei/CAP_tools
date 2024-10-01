@@ -1,27 +1,20 @@
 import argparse
 import os
-import sys
-
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import nibabel as nb
 
 import dill as pickle
+import nibabel as nb
+import numpy as np
+import pandas as pd
 
 from nltools.stats import isc
 
-import CAP_utils
-import CAP_analysis
-import CAP_plots
-from CAP_utils import color_str
-
+import analysis
+import plots
 import surface_mapping as sfm
+import utils
 
-if CAP_utils.is_interactive():
+from utils import color_str
+if utils.is_interactive():
     from tqdm.notebook import tqdm
 else:
     from tqdm import tqdm
@@ -154,7 +147,7 @@ def create_save_paths(args):
     save_paths["CAP_labels"] = f"{out_path}_CAP_states_K{{k}}_labels.npy"
     save_paths["pkl"] = f"{out_path}_CAP_states_K{{k}}.pkl"
 
-    plot_dir = f"{out_path}_CAP_plots"
+    plot_dir = f"{out_path}_plots"
     if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
 
@@ -216,7 +209,7 @@ def main():
     save_paths = create_save_paths(args)
     cifti_paths = get_cifti_paths(args.ciftis)
 
-    raw_cifti_data_array, ROI_labels = CAP_utils.load_cifti_arrays(cifti_paths, pbar=args.pbar)
+    raw_cifti_data_array, ROI_labels = utils.load_cifti_arrays(cifti_paths, pbar=args.pbar)
 
     preprocess_arguments = {"crop_length": 0} #TODO: Make this into real argparse with specific args
     cifti_array = preprocess_cifti_array(raw_cifti_data_array, pbar=args.pbar, **preprocess_arguments)
@@ -225,9 +218,9 @@ def main():
 
     if args.isc_threshold:
         ROI_subset, isc_df = ISC_subset(cifti_array, ROI_labels, isc_threshold=args.isc_threshold, pbar=args.pbar)
-        CAP_plots.ISC_plot(isc_df, args.isc_threshold, template_cifti,
+        plots.ISC_plot(isc_df, args.isc_threshold, template_cifti,
                            save_path=save_paths["ISC_plot"], title=args.title)
-        ROI_subset_values = CAP_utils.cifti_map(ROI_subset, ROI_subset, template_cifti, fill_value="???")
+        ROI_subset_values = utils.cifti_map(ROI_subset, ROI_subset, template_cifti, fill_value="???")
         # TODO: migrate away from SFM???
         sfm.write_labels_to_dlabel(ROI_subset_values, save_paths["ROI_subset_dlabel"],
                                    label_name=f"ISC_subset_{args.isc_threshold}")
@@ -240,7 +233,7 @@ def main():
         isc_df = []
 
     #TODO: Add optimal K plot (PAC optim)
-    CAP_states, CAP_labels = CAP_analysis.find_CAP_states(cifti_array, ROI_labels,
+    CAP_states, CAP_labels = analysis.find_CAP_states(cifti_array, ROI_labels,
                                                           set_k=args.set_k,
                                                           ROI_subset=ROI_subset,
                                                           seed=args.seed,
@@ -255,18 +248,18 @@ def main():
         obj = [CAP_states, CAP_labels, isc_df, ROI_labels, cifti_paths]
         pickle.dump(obj, file)
 
-    CAP_utils.write_CAP_scalars(CAP_states, save_paths["CAP_pscalar"], cifti=template_cifti)
+    utils.write_CAP_scalars(CAP_states, save_paths["CAP_pscalar"], cifti=template_cifti)
     # TODO: Add plotting functions for CAP states (frac occ, etc.)
-    CAP_plots.create_CAP_state_plots(CAP_states, CAP_labels, ROI_labels, template_cifti,
+    plots.create_CAP_state_plots(CAP_states, CAP_labels, ROI_labels, template_cifti,
                                      save_path=save_paths["pCAP_plot"])
 
     if args.dtseries:
         dtseries_paths = get_cifti_paths(args.dtseries)
         template_dtseries = nb.load(dtseries_paths[0])
         dCAP_states = create_dCAP_states(cifti_array, CAP_labels, dtseries_paths)
-        CAP_utils.write_CAP_scalars(dCAP_states, save_paths["CAP_dscalar"], cifti=template_dtseries)
+        utils.write_CAP_scalars(dCAP_states, save_paths["CAP_dscalar"], cifti=template_dtseries)
         # TODO: Add plotting functions for CAP states (frac occ, etc.)
-        CAP_plots.create_CAP_state_plots(dCAP_states, CAP_labels, ROI_labels, template_dtseries,
+        plots.create_CAP_state_plots(dCAP_states, CAP_labels, ROI_labels, template_dtseries,
                                          save_path=save_paths["dCAP_plot"])
 
 
