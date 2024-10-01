@@ -1,0 +1,10 @@
+/data/data7/HCP_7T/100610/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/102311/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/102816/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/104416/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/105923/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/108323/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/109123/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/111312/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/111514/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
+/data/data7/HCP_7T/114823/MNINonLinear/Results/tfMRI_MOVIE1_7T_AP/tfMRI_MOVIE1_7T_AP_Atlas_hp2000_clean_nilearn.dtseries.nii
