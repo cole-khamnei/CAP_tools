@@ -44,26 +44,6 @@ def create_cifti_cortex_axis(nvertex=CIFTI_NVERTEX):
     return bm_cortex
 
 
-def values_to_dscalar(values, scalar_name: str = "variable") -> nb.cifti2.cifti2.Cifti2Image:
-    """ """
-    assert CIFTI_NVERTEX == len(values["left"])
-    assert CIFTI_NVERTEX == len(values["right"])
-
-    bm_cortex = create_cifti_cortex_axis()
-    axes = (nb.cifti2.ScalarAxis([scalar_name]), bm_cortex,)
-    header = nb.cifti2.Cifti2Header.from_axes(axes)
-    data = np.hstack([values["left"], values["right"]]).reshape(1, -1)
-
-    return nb.Cifti2Image(data, header=header)
-
-
-def write_values_to_dscalar(values, path, scalar_name: str = "variable"):
-    """ """
-    assert path.endswith("dscalar.nii")
-    cifti = values_to_dscalar(values, scalar_name=scalar_name)
-    cifti.to_filename(path)
-
-
 def create_dlabel_map(labels, null_label="???"):
     """ """
     label_set = np.unique(np.vstack([labels["left"], labels["right"]]))
@@ -106,84 +86,6 @@ def write_labels_to_dlabel(labels, path, label_name: str = "label", cmap=None):
     assert path.endswith("dlabel.nii")
     cifti = labels_to_dlabel(labels, label_name=label_name, cmap=cmap)
     cifti.to_filename(path)
-
-
-def series_to_dtseries(values, start=0, step=1):
-    """ """
-    assert CIFTI_NVERTEX == len(values["left"])
-    assert CIFTI_NVERTEX == len(values["right"])
-
-    size = values["left"].shape[-1]
-    assert values["right"].shape[-1] == size
-    
-    bm_cortex = create_cifti_cortex_axis()
-    series = nb.cifti2.SeriesAxis(start=start, step=step, size=size)
-    
-    header = nb.cifti2.Cifti2Header.from_axes((series, bm_cortex))
-    data = np.vstack([values["left"], values["right"]]).T
-
-    return nb.Cifti2Image(data, header=header)
-
-
-def write_series_to_dtseries(series, path, start=0, step=1):
-    """ """
-    assert path.endswith("dtseries.nii")
-    cifti = series_to_dtseries(series, start=start, step=step)
-    cifti.to_filename(path)
-
-
-# ------------------------------------------------------------------- #
-# --------------------    Parcellation Schemes   -------------------- #
-# ------------------------------------------------------------------- #
-
-# https://balsa.wustl.edu/about/fileTypes#:~:text=GIFTI%20is%20an%20established%20data,label%20data%20for%20each%20vertex.
-# https://nbviewer.org/github/neurohackademy/nh2020-curriculum/blob/master/we-nibabel-markiewicz/NiBabel.ipynb
-
-def surf_data_from_cifti(data, axis, surf_name):
-    assert isinstance(axis, nb.cifti2.BrainModelAxis)
-    for name, data_indices, model in axis.iter_structures():  # Iterates over volumetric and surface structures
-        if name == surf_name:                                 # Just looking for a surface
-            data = data.T[data_indices]                       # Assume brainmodels axis is last, move it to front
-            vtx_indices = model.vertex                        # Generally 1-N, except medial wall vertices
-            surf_data = np.zeros((vtx_indices.max() + 1,) + data.shape[1:], dtype=data.dtype)
-            surf_data[vtx_indices] = data
-            return surf_data
-    raise ValueError(f"No structure named {surf_name}")
-
-
-def get_cifti_values(cifti):
-    """ """
-    data = cifti.get_fdata()
-    axis = cifti.header.get_axis(1)
-    lh_values = surf_data_from_cifti(data, axis, 'CIFTI_STRUCTURE_CORTEX_LEFT').reshape(-1)
-    rh_values = surf_data_from_cifti(data, axis, 'CIFTI_STRUCTURE_CORTEX_RIGHT').reshape(-1)
-    return {"left": lh_values, "right": rh_values}
-
-
-def load_parcellation(path: str):
-    """ """
-    assert path.endswith("dlabel.nii")
-    cifti = nb.load(path)
-    data = cifti.get_fdata()
-    axes = [cifti.header.get_axis(i) for i in range(cifti.ndim)]
-    left = surf_data_from_cifti(data, axes[1], 'CIFTI_STRUCTURE_CORTEX_LEFT').reshape(-1)
-    right = surf_data_from_cifti(data, axes[1], 'CIFTI_STRUCTURE_CORTEX_RIGHT').reshape(-1)
-
-    cifti_map = dict(next(cifti.header.matrix[0].named_maps).label_table)
-    # cifti_label_map = {k: v.label for k, v in cifti_map.items()}
-    cifti_color_map = {k: v.rgba for k, v in cifti_map.items()}
-
-    cifti_label_map = {}
-    for k, v in cifti_map.items():
-        label = v.label
-        if "LEFT" in label or "RIGHT" in label:
-            hemistr = "L_" if "LEFT" in label else "R_"
-            tokens = label.split("_")[::-1][1:]
-            label = hemistr + "".join([t.title() for t in tokens])
-
-        cifti_label_map[k] = label
-
-    return left, right, cifti_label_map
 
 
 # ------------------------------------------------------------------- #
