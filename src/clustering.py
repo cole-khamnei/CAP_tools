@@ -16,6 +16,8 @@ from utils import tqdm
 try:
     import torch
     # TODO: Change to work on CUDA and CPU as well
+    # TODO: Consider breaking out into separate script so torch isnt loaded always
+    # TODO: Clean up
     assert torch.backends.mps.is_available()
     device = torch.device("mps")
     TORCH_AVAILABLE = True

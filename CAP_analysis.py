@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from src import constants, utils, clustering, pipeline
+from src import constants, utils, pipeline
 from src import surface_mapping as sfm
 
 # ------------------------------------------------------------------- #
@@ -116,6 +116,7 @@ def main():
         isc_df = []
 
     #TODO: Add optimal K plot (PAC optim)
+    from src import clustering
     CAP_states, CAP_labels = clustering.find_CAP_states(cifti_array, ROI_labels,
                                                           set_k=args.set_k,
                                                           ROI_subset=ROI_subset,
