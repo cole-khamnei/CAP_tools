@@ -6,8 +6,6 @@ import nibabel as nb
 import numpy as np
 import pandas as pd
 
-from nltools.stats import isc
-
 import os
 import sys
 sys.path.append(os.path.dirname(__file__))
@@ -77,6 +75,9 @@ def ISC_subset(cifti_array: np.ndarray,
 
     pbar_kwargs = dict(desc=color_str("Calculating ISC Values", "blue"), colour="blue")
     ROI_iter = tqdm(ROI_labels, **pbar_kwargs) if pbar else ROI_labels
+
+    # Loading ISC takes a long time
+    from nltools.stats import isc
     for i, ROI in enumerate(ROI_iter):
         res = isc(cifti_array[:, :, i].T)
         res["roi"] = ROI

@@ -1,7 +1,9 @@
 import argparse
 import os
 
-from src import constants, utils, pipeline
+from src import constants
+from src import utils
+from src import pipeline
 from src import surface_mapping as sfm
 
 # ------------------------------------------------------------------- #
