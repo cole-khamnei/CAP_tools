@@ -40,7 +40,7 @@ def create_save_paths(args):
 
 def get_arguments(test_set = None):
     """ """
-    parser = argparse.ArgumentParser(prog='CAP_analysis',
+    parser = argparse.ArgumentParser(prog='CAP-tools',
                                      description='Identifies CAP states for a given set of CIFTIs')
     parser.add_argument('-c', "--ciftis", dest='ciftis', action="extend", nargs="+", type=str, required=True,
                         help="Txt file with paths of cifti files or cifti glob path")
@@ -64,6 +64,8 @@ def get_arguments(test_set = None):
                         required=False, help="Random seed")
     parser.add_argument('-k', "--set-k", dest='set_k', action="store", type=int, default=None,
                         required=False, help="Number of clusters K to use in KMeans, default finds optimal K with CKM")
+    parser.add_argument("--dry-run", dest='dry_run', action="store_true", default=False,
+                        required=False, help="Runs a dry of the program, checking paths but not doing any anaysis.")
 
     #TODO: Remove test set options
     if test_set is None:
@@ -91,6 +93,8 @@ def main():
     args = get_arguments()
     save_paths = create_save_paths(args)
     cifti_paths = pipeline.get_cifti_paths(args.ciftis)
+    if args.dry_run:
+        return
 
     raw_cifti_data_array, ROI_labels = utils.load_cifti_arrays(cifti_paths, pbar=args.pbar)
 
