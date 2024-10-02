@@ -94,6 +94,7 @@ def main():
     save_paths = create_save_paths(args)
     cifti_paths = pipeline.get_cifti_paths(args.ciftis)
     if args.dry_run:
+        print("Dry run complete. Valid arguments given.")
         return
 
     raw_cifti_data_array, ROI_labels = utils.load_cifti_arrays(cifti_paths, pbar=args.pbar)
