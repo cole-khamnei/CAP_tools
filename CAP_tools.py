@@ -1,8 +1,13 @@
 import argparse
 import os
 
+import nibabel as nb
+import numpy as np
+import dill as pickle
+
 from src import constants
 from src import utils
+from src import plots
 from src import pipeline
 from src import surface_mapping as sfm
 
