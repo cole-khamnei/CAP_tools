@@ -210,7 +210,7 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
             fig, ax = plt.subplots(figsize=(6, 4))
             ax.plot(k_s, CKM.method_values)
             ax.set_xlabel("K"), ax.set_ylabel(CKM.optimal_k_method)
-            fig.savefig(save_plot_path)
+            fig.savefig(save_plot_path.format(k=k))
 
 
     else:
