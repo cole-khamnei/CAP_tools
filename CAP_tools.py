@@ -69,6 +69,10 @@ def get_arguments(test_set = None):
                         required=False, help="Verbosity")
     parser.add_argument('-s', "--seed", dest='seed', action="store", type=int, default=1,
                         required=False, help="Random seed")
+    parser.add_argument("--n-reps", dest='n_reps', action="store", type=int, default=40,
+                        required=False, help="Number of K-means repitions per K")
+    parser.add_argument("--k-max", dest='kmax', action="store", type=int, default=20,
+                        required=False, help="Max K to check.")
     parser.add_argument('-k', "--set-k", dest='set_k', action="store", type=int, default=None,
                         required=False, help="Number of clusters K to use in KMeans, default finds optimal K with CKM")
     parser.add_argument("--dry-run", dest='dry_run', action="store_true", default=False,
@@ -134,6 +138,8 @@ def main():
                                                           ROI_subset=ROI_subset,
                                                           seed=args.seed,
                                                           pbar=args.pbar,
+                                                          n_reps=args.n_reps,
+                                                          kmax=args.kmax,
                                                           save_plot_path=save_paths["PAC_plot"])
 
     k = len(CAP_states)

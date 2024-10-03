@@ -89,7 +89,7 @@ class MultiKMeans:
 
     def calc_PAC(self, u1=0.1, u2=0.9, block_size=1_000, use_torch=True, device="gpu", **kwargs):
         """ """
-        import PAC_score
+        from . import PAC_score
         self.PAC = PAC_score.calc_PAC_block(self, u1=u1, u2=u2, use_torch=use_torch,
                                             block_size=block_size, device=device, **kwargs)
 
@@ -209,7 +209,7 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
             fig, ax = plt.subplots(figsize=(6, 4))
             ax.plot(k_s, CKM.method_values)
             ax.set_xlabel("K"), ax.set_ylabel(CKM.optimal_k_method)
-            fig.savefig(save_plot_path.format(k=k))
+            fig.savefig(save_plot_path.format(k=set_k))
 
 
     else:
