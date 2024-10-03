@@ -6,15 +6,16 @@ import nibabel as nb
 import numpy as np
 import pandas as pd
 
-import os
-import sys
-sys.path.append(os.path.dirname(__file__))
+# import os
+# import sys
+# sys.path.append(os.path.dirname(__file__))
 
-import utils, plots, clustering
-import surface_mapping as sfm
+from . import plots
+from . import clustering
+from . import surface_mapping as sfm
 
-from utils import color_str
-from utils import tqdm
+from .utils import color_str
+from .utils import tqdm
 from typing import List, Optional, Tuple
 
 # ------------------------------------------------------------------- #

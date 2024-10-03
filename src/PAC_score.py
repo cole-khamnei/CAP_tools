@@ -4,11 +4,10 @@ import numpy as np
 from termcolor import colored
 from typing import List, Tuple, Optional
 
-import sys
-sys.path.append(os.path.dirname(__file__))
+# import sys
+# sys.path.append(os.path.dirname(__file__))
 
-import utils
-from utils import tqdm
+from .utils import tqdm
 try:
     import torch
     # TODO: Change to work on CUDA and CPU as well
