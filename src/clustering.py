@@ -153,7 +153,8 @@ class ConsensusKMeans:
             method_func = getattr(mkm, f"calc_{method}")
             self.method_values.append(method_func(**method_kws))
 
-        self.optimal_k = self.ks[np.argmin(self.method_values[2:]) + 2]
+        min_opt_k = 5
+        self.optimal_k = self.ks[np.argmin(self.method_values[min_opt_k:]) + min_opt_k]
         self.optimal_k_method = method
 
         return self.optimal_k

@@ -69,7 +69,7 @@ def get_arguments(test_set = None):
                         required=False, help="Verbosity")
     parser.add_argument('-s', "--seed", dest='seed', action="store", type=int, default=1,
                         required=False, help="Random seed")
-    parser.add_argument("--n-reps", dest='n_reps', action="store", type=int, default=40,
+    parser.add_argument("--n-reps", dest='n_reps', action="store", type=int, default=100,
                         required=False, help="Number of K-means repitions per K")
     parser.add_argument("--k-max", dest='kmax', action="store", type=int, default=20,
                         required=False, help="Max K to check.")
