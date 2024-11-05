@@ -10,3 +10,8 @@
 <br><br>
 # Sources:
 - #TODO
+
+
+# TODO:
+[] run on early cort data
+[] refactor __init__.py + any needed package structure
