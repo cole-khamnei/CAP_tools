@@ -6,21 +6,17 @@ import nibabel as nb
 import numpy as np
 import pandas as pd
 
-# import os
-# import sys
-# sys.path.append(os.path.dirname(__file__))
-
 from . import plots
 from . import clustering
 from . import surface_mapping as sfm
 
 from .utils import color_str
-from .utils import tqdm
+from tqdm.auto import tqdm
 from typing import List, Optional, Tuple
 
-# ------------------------------------------------------------------- #
-# --------------------   CAP pipeline functions  -------------------- #
-# ------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------# 
+# ---------------            CAP Pipeline Functions            ---------------# 
+# ----------------------------------------------------------------------------# 
 
 
 def get_cifti_paths(cifti_argument: List[str]) -> List[str]:
@@ -131,6 +127,6 @@ def create_dCAP_states(cifti_array: np.ndarray, CAP_labels: np.ndarray,
     return np.array([dCAP_states[i] for i in sorted(dCAP_states.keys())])
 
 
-# ------------------------------------------------------------------- #
-# --------------------            END            -------------------- #
-# ------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------# 
+# --------------------                END                 --------------------# 
+# ----------------------------------------------------------------------------#

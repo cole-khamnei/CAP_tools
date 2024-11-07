@@ -4,24 +4,11 @@ import numpy as np
 from termcolor import colored
 from typing import List, Tuple, Optional
 
-# ------------------------------------------------------------------- #
-# --------------------          TQDM -_-         -------------------- #
-# ------------------------------------------------------------------- #
+from tqdm.auto import tqdm
 
-# TODO: Find less garbage way to do this
-def is_interactive() -> bool:
-    import __main__ as main
-    return not hasattr(main, '__file__')
-
-if is_interactive():
-    from tqdm.notebook import tqdm
-else:
-    from tqdm import tqdm
-
-
-# ------------------------------------------------------------------- #
-# --------------------          Helpers          -------------------- #
-# ------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------# 
+# --------------------              Helpers               --------------------# 
+# ----------------------------------------------------------------------------# 
 
 
 def color_str(string: str, color: str) -> str:
@@ -94,7 +81,6 @@ def write_CAP_scalars(CAP_states: np.ndarray, save_path: str,
 def load_cifti_arrays(cifti_paths: List[str], pbar: bool = True) -> Tuple[np.ndarray, List[str]]:
     """ """
 
-
     if pbar:
         file_ext = cifti_paths[0].split('.', maxsplit=1)[1]
         cifti_iter = tqdm(cifti_paths, colour="blue",
@@ -113,6 +99,6 @@ def load_cifti_arrays(cifti_paths: List[str], pbar: bool = True) -> Tuple[np.nda
     return raw_cifti_data_array, ROI_labels
 
 
-# ------------------------------------------------------------------- #
-# --------------------            End            -------------------- #
-# ------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------# 
+# --------------------                End                 --------------------# 
+# ----------------------------------------------------------------------------#
