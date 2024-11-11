@@ -11,6 +11,11 @@ from tqdm.auto import tqdm
 # ----------------------------------------------------------------------------# 
 
 
+def is_interactive() -> bool:
+    import __main__ as main
+    return not hasattr(main, '__file__')
+
+
 def color_str(string: str, color: str) -> str:
     """ """
     return string if is_interactive() else colored(string, color)
