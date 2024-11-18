@@ -57,8 +57,25 @@ def preprocess_cifti_array(raw_cifti_data_array: np.ndarray,
     else:
         pass
 
+    array_lengths = [len(obj) for obj in raw_cifti_data_array]
+
+    # TODO: add error handling for short arrays
+    if any(array_lengths[0] != a_len for a_len in array_lengths):
+        print("Arrays of different lengths: cropping to minimum size.")
+        min_length = np.min(array_lengths)
+        if np.median(array_lengths) * 0.70 > np.min(array_lengths):
+            print(f"WARNING: shortest array ({np.min(array_lengths)}) is less than 70% of median.")
+            assert False
+
+        processed_cifti_data_array = np.array([arr[:min_length] for arr in raw_cifti_data_array])
+
+    else:
+        processed_cifti_data_array = raw_cifti_data_array
+
+    assert not np.any(np.isnan(processed_cifti_data_array))
+
     print(color_str("Preprocessing CIFTI data array: Done", "blue"))
-    return raw_cifti_data_array
+    return processed_cifti_data_array
 
 
 def ISC_subset(cifti_array: np.ndarray,
@@ -114,8 +131,9 @@ def create_dCAP_states(cifti_array: np.ndarray, CAP_labels: np.ndarray,
 
         for state_i in CAP_state_nums:
             cifti_CAP_i_index = cifti_CAP_labels == state_i
+            crop_len = len(cifti_CAP_i_index)
 
-            dCAP_states[state_i] += np.sum(dtseries_data[cifti_CAP_i_index, :], axis=0)
+            dCAP_states[state_i] += np.sum(dtseries_data[:crop_len][cifti_CAP_i_index, :], axis=0)
             dCAP_state_norms[state_i] += np.count_nonzero(cifti_CAP_i_index)
 
         if pbar:

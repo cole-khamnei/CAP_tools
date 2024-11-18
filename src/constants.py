@@ -4,6 +4,8 @@
 
 SURFACES_DIR_PATH = "/System/Volumes/Data/data/data7/network_control/projects/network_control/resources/surfaces"
 
+VALID_DISTANCE_METRICS = ["cosine", "euclidean"]
+
 # ----------------------------------------------------------------------------# 
 # --------------------                End                 --------------------# 
 # ----------------------------------------------------------------------------#

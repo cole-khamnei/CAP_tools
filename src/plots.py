@@ -52,11 +52,15 @@ def create_CAP_state_plots(CAP_states: np.ndarray, CAP_labels: np.ndarray,
     k = len(CAP_states)
     fig, axes = plt.subplots(k, 1, figsize=(12, k * 3.5))
     plt.subplots_adjust(hspace=-0.0)
-    for i, CAP_state in enumerate(CAP_states):
-        CAP_state_values = utils.cifti_map(ROI_labels, CAP_state, template_cifti)
-        ax, p = sfm.surface_plot(CAP_state_values, cmap=cmap, ax=axes[i],
-                                 cbar_kws=dict(pad=-0.08)) #, color_range=[-0.75, 0.75])
-        ax.set_title(f"{title} CAP State {i + 1}", y=0.83)
+
+    try:
+        for i, CAP_state in enumerate(CAP_states):
+            CAP_state_values = utils.cifti_map(ROI_labels, CAP_state, template_cifti)
+            ax, p = sfm.surface_plot(CAP_state_values, cmap=cmap, ax=axes[i],
+                                     cbar_kws=dict(pad=-0.08)) #, color_range=[-0.75, 0.75])
+            ax.set_title(f"{title} CAP State {i + 1}", y=0.83)
+    except:
+        return
 
     if save_path:
         save_path = save_path.format(k=k) if "{k}" in save_path else save_path

@@ -98,6 +98,18 @@ def load_cifti_arrays(cifti_paths: List[str], pbar: bool = True) -> Tuple[np.nda
         cifti = nb.load(cifti_path)
         raw_cifti_data_array.append(cifti.get_fdata())
 
+    array_lengths = [len(obj) for obj in raw_cifti_data_array]
+
+    # TODO: add error handling for short arrays
+    if any(array_lengths[0] != a_len for a_len in array_lengths):
+        print("Arrays of different lengths: cropping to minimum size.")
+        min_length = np.min(array_lengths)
+        if np.median(array_lengths) * 0.70 > np.min(array_lengths):
+            print(f"WARNING: shortest array ({np.min(array_lengths)}) is less than 70% of median.")
+            assert False
+
+        raw_cifti_data_array = [arr[:min_length] for arr in raw_cifti_data_array]
+
     raw_cifti_data_array = np.array(raw_cifti_data_array)
     ROI_labels = [label for label, _, index in cifti.header.get_axis(1)]
 

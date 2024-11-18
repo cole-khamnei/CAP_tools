@@ -8,6 +8,8 @@ from typing import List, Tuple, Optional
 
 from tqdm.auto import tqdm
 
+from . import constants
+
 # ----------------------------------------------------------------------------# 
 # --------------------            Random Utils            --------------------# 
 # ----------------------------------------------------------------------------# 
@@ -29,8 +31,32 @@ def kmeans_convergence_check(km):
 # ----------------------------------------------------------------------------# 
 
 
+class DistanceModifiedKMeans(KMeans):
+    def __init__(self, dist="cosine", **kwargs):
+        assert dist in constants.VALID_DISTANCE_METRICS
+        self.dist = dist
+        super().__init__(**kwargs)
+
+    def distance_transform(self, X):
+        """ """
+        assert X.ndim == 2
+        if self.dist == "cosine":
+            return np.array([x_i / np.sqrt(np.sum(x_i ** 2)) for x_i in X])
+        elif self.dist == "euclidean":
+            return X
+
+        raise NotImplementedError
+
+    def fit(self, X):
+        """ """
+        dist_transformed_X = self.distance_transform(X)
+        super().fit(dist_transformed_X)
+        return self
+
+
+
 class MultiKMeans:
-    def __init__(self,k: int, n_reps: int = 100, max_iter=1_200,
+    def __init__(self,k: int, dist: str = "cosine", n_reps: int = 100, max_iter=1_200,
                  p_events: float = 1.0, p_features: float = 1.0):
         """
         """
@@ -39,15 +65,17 @@ class MultiKMeans:
         self.n_reps = n_reps
         self.p_events = p_events # not used now
         self.p_features = p_features # not used now
+
+        assert dist in constants.VALID_DISTANCE_METRICS
+        self.dist = dist
         self.build()
 
     def build(self):
         """ """
         self.is_fit = False
         self.cm_built = False
-        self.kmeans = [KMeans(n_clusters=self.k, max_iter=self.max_iter)
+        self.kmeans = [DistanceModifiedKMeans(dist=self.dist, n_clusters=self.k, max_iter=self.max_iter)
                        for n_i in range(self.n_reps)]
-
 
     def create_sample_indices(self, X: np.ndarray, event_groupings=None):
         """ """
@@ -63,16 +91,16 @@ class MultiKMeans:
             self.group_sets = [unique_groups[gs] for gs in create_sampled_set(len(unique_groups), self.p_events, self.n_reps)]
             self.event_sets = [np.where(np.isin(event_groupings, gs))[0] for gs in self.group_sets]
 
-
     def fit(self, X, event_groupings=None, pbar=False, **kwargs):
         """ """
-        self.create_sample_indices(X, event_groupings=event_groupings)
 
+        self.create_sample_indices(X, event_groupings=event_groupings)
         self.labels = []
         kwargs["colour"] = "blue"
         kwargs["desc"] = colored(f"Fitting MultiKMeans (k={self.k})", "blue")
         km_iter = tqdm(self.kmeans, **kwargs) if pbar else self.kmeans
         for i, kmeans in enumerate(km_iter):
+            # TODO: Address variable length data - probably should just concatenate to minimum size
             kmeans.fit(X[self.event_sets[i]][:, self.feature_sets[i]]) # Index with feature and event set
             kmeans_convergence_check(kmeans)
 
@@ -89,9 +117,7 @@ class MultiKMeans:
         from . import PAC_score
         self.PAC = PAC_score.calc_PAC_block(self, u1=u1, u2=u2, use_torch=use_torch,
                                             block_size=block_size, device=device, **kwargs)
-
         return self.PAC
-
 
     def __repr__(self):
         s = f"MultiKMeans: K={self.k}  n_reps={self.n_reps}"
@@ -100,7 +126,8 @@ class MultiKMeans:
 
 
 class ConsensusKMeans:
-    def __init__(self, kmax=None, ks=None, kmin=2, verbose: bool = True,
+    def __init__(self, kmax=None, ks=None, kmin=2,
+                 dist: str = "cosine", verbose: bool = True,
                  n_reps: int = 100, u1: float = 0.1, u2: float = 0.9,
                  **kmeans_kws):
         """ """
@@ -116,6 +143,9 @@ class ConsensusKMeans:
         self.pac_kws=dict(u1=u1, u2=u2)
         self.verbose = verbose
 
+        assert dist in constants.VALID_DISTANCE_METRICS
+        self.dist = dist
+
         self.multikmeans = []
         self.is_fit = False
 
@@ -125,7 +155,7 @@ class ConsensusKMeans:
         tqdm_kwargs = dict(desc=colored("CKM - Fitting KMeans", "cyan"), colour="cyan")
         ks_iter = tqdm(self.ks, **tqdm_kwargs) if pbar else self.ks
         for k in ks_iter:
-            mkm_k = MultiKMeans(k=k, n_reps=self.n_reps,
+            mkm_k = MultiKMeans(k=k, dist=self.dist, n_reps=self.n_reps,
                                 **self.kmeans_kws).fit(X, pbar=pbar, event_groupings=event_groupings,
                                                        leave=False)
             self.multikmeans.append(mkm_k)
@@ -165,6 +195,7 @@ class ConsensusKMeans:
 def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: Optional[list] = None,
                     seed: int = 0,
                     pbar: bool = True,
+                    dist: str = "cosine",
                     set_k = None,
                     cifti_sampling: bool = True,
                     kmax = 20,
@@ -177,6 +208,7 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
     """ """
 
     # TODO: Create arguments for all CKM params
+    assert dist in constants.VALID_DISTANCE_METRICS
 
     np.random.seed(seed)
     all_frames = np.vstack(cifti_array)
@@ -193,11 +225,11 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
         ROI_subset_index = np.where(np.isin(ROI_labels, ROI_subset))[0]
         cluster_array = all_frames[:, ROI_subset_index]
 
-    ncluster_array = cluster_array / np.sqrt(np.sum(cluster_array ** 2, axis=1)).reshape(-1, 1)
+    # ncluster_array = cluster_array / np.sqrt(np.sum(cluster_array ** 2, axis=1)).reshape(-1, 1)
 
     if set_k is None:
         CKM = ConsensusKMeans(kmax=kmax, kmin=kmin, n_reps=n_reps, p_features=p_features, p_events=p_events)
-        CKM.fit(ncluster_array, event_groupings=cifti_groupings, pbar=pbar)
+        CKM.fit(cluster_array, event_groupings=cifti_groupings, pbar=pbar)
         set_k = CKM.find_optimal_k(pbar=pbar)
         print(colored(f"Found optimal K={set_k}.", "yellow"))
 
@@ -208,16 +240,14 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
             ax.plot(k_s, CKM.method_values)
             ax.set_xlabel("K"), ax.set_ylabel(CKM.optimal_k_method)
             fig.savefig(save_plot_path.format(k=set_k))
-
-
     else:
         print(colored(f"Using provided K={set_k}.", "yellow"))
         # TODO: Create PAC minimum K selection plot
 
     np.random.seed(seed + 232)
-
-    km = KMeans(n_clusters=set_k, max_iter=700, verbose=0, random_state=seed)
-    km.fit(ncluster_array)
+    km = DistanceModifiedKMeans(dist=dist, n_clusters=set_k, max_iter=700, verbose=0, random_state=seed)
+    # km = KMeans(n_clusters=set_k, max_iter=700, verbose=0, random_state=seed)
+    km.fit(cluster_array)
 
     CAP_states = []
     for cluster in np.arange(set_k):
