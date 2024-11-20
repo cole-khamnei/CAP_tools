@@ -148,8 +148,6 @@ def main():
     """ """
     args = get_arguments()
     save_paths = create_save_paths(args)
-
-    save_params(save_paths, args)
     cifti_paths = pipeline.get_cifti_paths(args.ciftis)
 
     if args.dry_run:
@@ -223,6 +221,9 @@ def main():
 
         # TODO: Fix GLEW initialize error: most likely make plot CAP function
         # that works on outputs of CAPs
+
+    save_params(save_paths, args)
+    # IF .params file does not exist, then program did not finish correctly.
 
 if __name__ == '__main__':
     main()
