@@ -1,10 +1,13 @@
 dill==0.3.9
-matplotlib==3.9.2
+matplotlib==3.10.0
+nctpy==1.0.1
 nibabel==5.3.2
 nltools==0.5.1
-numpy==1.23.5
+numpy==2.2.0
 pandas==2.2.3
-scikit_learn==1.5.2
+plot==0.6.5
+scikit_learn==1.6.0
+scipy==1.14.1
 seaborn==0.13.2
 surfplot==0.2.0
 termcolor==2.5.0
