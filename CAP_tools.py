@@ -109,7 +109,7 @@ def get_arguments(test_set: list = None):
                         required=False, help="Random seed")
     parser.add_argument("--n-reps", dest='n_reps', action="store", type=int, default=40,
                         required=False, help="Number of K-means repitions per K")
-    parser.add_argument("--k-max", dest='kmax', action="store", type=int, default=20,
+    parser.add_argument("--k-max", dest='kmax', action="store", type=int, default=15,
                         required=False, help="Max K to check.")
     parser.add_argument('-k', "--set-k", dest='set_k', action="store", type=int, default=None,
                         required=False, help="Number of clusters K to use in KMeans, default finds optimal K with CKM")
