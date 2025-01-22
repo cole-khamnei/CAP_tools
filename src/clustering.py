@@ -54,7 +54,6 @@ class DistanceModifiedKMeans(KMeans):
         return self
 
 
-
 class MultiKMeans:
     def __init__(self,k: int, dist: str = "cosine", n_reps: int = 100, max_iter=1_200,
                  p_events: float = 1.0, p_features: float = 1.0):

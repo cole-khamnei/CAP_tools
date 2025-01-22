@@ -48,6 +48,7 @@ def create_save_paths(args):
 
     return save_paths
 
+
 def save_params(save_paths, args):
     """ """
     with open(save_paths["params"], "w") as param_file:
@@ -224,6 +225,7 @@ def main():
 
     save_params(save_paths, args)
     # IF .params file does not exist, then program did not finish correctly.
+
 
 if __name__ == '__main__':
     main()
