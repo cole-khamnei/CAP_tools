@@ -1,5 +1,6 @@
 import nibabel as nb
 import numpy as np
+import multiprocess as mp
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -48,7 +49,23 @@ def load_dscalar_as_flat_gifti(cifti_path, n_vertex=32_492):
 # ----------------------------------------------------------------------------# 
 
 
-def compare_caps(cap_set, compare_cap_set, n_perm = 40, metric='pearsonr', seed = 42):
+def parallel_nulls(cap_data, n_perm, n_workers=8, n_max_per_worker=20, seed=137):
+    """ """
+    n_jobs = int(np.ceil(n_perm / n_max_per_worker))
+
+    np.random.seed(seed)
+    seeds = np.random.choice(np.arange(1_000_000), size=n_jobs, replace=False)
+    job_sizes = [min(n_perm - i * n_max_per_worker, n_max_per_worker) for i in range(n_jobs)]
+    data = [cap_data for i in range(n_jobs)]
+
+    null_worker = lambda args: nm.nulls.alexander_bloch(data=args[0], atlas='fslr', density='32k',
+                                                        n_perm=args[1], seed=args[2])
+    with mp.Pool(n_workers) as pool:
+        results = pool.map(null_worker, zip(data, job_sizes, seeds))
+    return np.hstack(results)
+
+
+def compare_caps(cap_set, compare_cap_set, n_perm = 40, metric='pearsonr', seed = 42, n_workers = 8):
     """ """
 
     if isinstance(cap_set, str):
@@ -62,8 +79,10 @@ def compare_caps(cap_set, compare_cap_set, n_perm = 40, metric='pearsonr', seed 
     compare_p = np.full(compare_shape, fill_value=np.nan)
 
     for i, cap_data in enumerate(tqdm(cap_set, desc="Comparing CAPs")):
-        rotated_nulls = nm.nulls.alexander_bloch(data=cap_data, atlas='fslr', density='32k',
-                                                      n_perm=n_perm, seed=seed)
+        # rotated_nulls = nm.nulls.alexander_bloch(data=cap_data, atlas='fslr', density='32k',
+        #                                               n_perm=n_perm, seed=seed)
+        rotated_nulls = parallel_nulls(cap_data, n_perm, n_workers=n_workers, n_max_per_worker=20, seed=seed)
+
         for j, compare_cap_data in enumerate(compare_cap_set):
             r, p  = stats.compare_images(cap_data, compare_cap_data, nulls=rotated_nulls,
                                          nan_policy='omit', metric=metric)
