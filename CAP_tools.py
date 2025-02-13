@@ -12,6 +12,15 @@ from src import plots
 from src import pipeline
 from src import surface_mapping as sfm
 
+
+# \section argument defaults
+
+DEFAULT_VERBSOITY = 1
+DEFAULT_MIN_OPT_K = 7
+DEFAULT_K_MAX = 15
+DEFAULT_N_REPS = 40
+DEFAULT_SEED = 1
+
 # ----------------------------------------------------------------------------# 
 # ----------------           Main Specific Helpers            ----------------# 
 # ----------------------------------------------------------------------------# 
@@ -104,14 +113,16 @@ def get_arguments(test_set: list = None):
                         help="Txt file with paths of dtseries files or glob path")
     parser.add_argument('-t', "--title", dest='title', action="store", type=str, default=None,
                         required=False, help="Title for plots")
-    parser.add_argument('-v', "--verbose", dest='verbose', action="store", type=int, default=1,
+    parser.add_argument('-v', "--verbose", dest='verbose', action="store", type=int, default=DEFAULT_VERBSOITY,
                         required=False, help="Verbosity")
-    parser.add_argument('-s', "--seed", dest='seed', action="store", type=int, default=1,
+    parser.add_argument('-s', "--seed", dest='seed', action="store", type=int, default=DEFAULT_SEED,
                         required=False, help="Random seed")
-    parser.add_argument("--n-reps", dest='n_reps', action="store", type=int, default=40,
+    parser.add_argument("--n-reps", dest='n_reps', action="store", type=int, default=DEFAULT_N_REPS,
                         required=False, help="Number of K-means repitions per K")
-    parser.add_argument("--k-max", dest='kmax', action="store", type=int, default=15,
+    parser.add_argument("--k-max", dest='kmax', action="store", type=int, default=DEFAULT_K_MAX,
                         required=False, help="Max K to check.")
+    parser.add_argument("--k-min-opt", dest='min_opt_k', action="store", type=int, default=DEFAULT_MIN_OPT_K,
+                        required=False, help="min K to check.")
     parser.add_argument('-k', "--set-k", dest='set_k', action="store", type=int, default=None,
                         required=False, help="Number of clusters K to use in KMeans, default finds optimal K with CKM")
     parser.add_argument("--dry-run", dest='dry_run', action="store_true", default=False,
@@ -134,6 +145,8 @@ def get_arguments(test_set: list = None):
     args.distance_metric = args.distance_metric.lower().strip()
     assert args.distance_metric in constants.VALID_DISTANCE_METRICS
 
+    assert args.min_opt_k < args.kmax
+
     args.pbar = args.verbose > 0
     args.title = args.title or os.path.basename(args.out_path)
 
@@ -150,6 +163,8 @@ def main():
     args = get_arguments()
     save_paths = create_save_paths(args)
     cifti_paths = pipeline.get_cifti_paths(args.ciftis)
+
+    cifti_paths = utils.cache_tmp_path(cifti_paths)
 
     if args.dry_run:
         print("Dry run complete. Valid arguments given.")
@@ -193,6 +208,7 @@ def main():
                                                           pbar=args.pbar,
                                                           n_reps=args.n_reps,
                                                           kmax=args.kmax,
+                                                          min_opt_k=args.min_opt_k,
                                                           save_plot_path=save_paths["PAC_plot"])
 
     k = len(CAP_states)
@@ -211,6 +227,7 @@ def main():
 
     if args.dtseries:
         dtseries_paths = pipeline.get_cifti_paths(args.dtseries)
+        dtseries_paths = utils.cache_tmp_path(dtseries_paths, write_cache=True)
         template_dtseries = nb.load(dtseries_paths[0])
         dCAP_states = pipeline.create_dCAP_states(cifti_array, CAP_labels, dtseries_paths)
         utils.write_CAP_scalars(dCAP_states, save_paths["CAP_dscalar"], cifti=template_dtseries)

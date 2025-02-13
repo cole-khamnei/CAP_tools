@@ -137,6 +137,7 @@ class ConsensusKMeans:
             raise ValueError("Either `kmax` or `ks` need to be provided.")
 
         self.ks = ks
+        self.kmin = np.min(ks)
         self.n_reps = n_reps
         self.kmeans_kws = kmeans_kws
         self.pac_kws=dict(u1=u1, u2=u2)
@@ -162,7 +163,7 @@ class ConsensusKMeans:
         self.is_fit = True
         return self
 
-    def find_optimal_k(self, method="PAC", pbar=False, **method_kws):
+    def find_optimal_k(self, method="PAC", pbar=False, min_opt_k=1, **method_kws):
         """ """
         assert self.is_fit
         self.method_values = []
@@ -179,8 +180,9 @@ class ConsensusKMeans:
             method_func = getattr(mkm, f"calc_{method}")
             self.method_values.append(method_func(**method_kws))
 
-        min_opt_k = 5
-        self.optimal_k = self.ks[np.argmin(self.method_values[min_opt_k:]) + min_opt_k]
+        min_opt_k_index = max(min_opt_k - self.kmin, 0)
+
+        self.optimal_k = self.ks[np.argmin(self.method_values[min_opt_k_index:]) + min_opt_k_index]
         self.optimal_k_method = method
 
         return self.optimal_k
@@ -200,6 +202,7 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
                     kmax = 20,
                     n_reps = 40, #TODO add flags,
                     kmin = 3,
+                    min_opt_k = 1,
                     p_features = 1,
                     p_events = 0.8,
                     save_plot_path = None,
@@ -229,7 +232,7 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
     if set_k is None:
         CKM = ConsensusKMeans(kmax=kmax, kmin=kmin, n_reps=n_reps, p_features=p_features, p_events=p_events)
         CKM.fit(cluster_array, event_groupings=cifti_groupings, pbar=pbar)
-        set_k = CKM.find_optimal_k(pbar=pbar)
+        set_k = CKM.find_optimal_k(pbar=pbar, min_opt_k=min_opt_k)
         print(colored(f"Found optimal K={set_k}.", "yellow"))
 
         if save_plot_path:
