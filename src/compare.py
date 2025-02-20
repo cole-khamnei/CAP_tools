@@ -96,7 +96,7 @@ def compare_caps(cap_set, compare_cap_set, n_perm = 40, metric='pearsonr', seed 
 # ----------------------------------------------------------------------------# 
 
 
-def compare_CAP_heatmap(compare_r, compare_p, cap_label, compare_label, only_max=False):
+def compare_CAP_heatmap(compare_r, compare_p, cap_label, compare_label, only_max=False, figsize=(5, 4)):
     """ """
     r_squared = compare_r ** 2
 
@@ -112,7 +112,7 @@ def compare_CAP_heatmap(compare_r, compare_p, cap_label, compare_label, only_max
     cols = [f"{compare_label} CAP {j+1}" for j in range(compare_p.shape[1])]
 
     # Plotting the heatmap
-    fig = plt.figure(figsize=(5, 4))
+    fig = plt.figure(figsize=figsize)
     # gs = sns.heatmap(filtered_r_squared, annot=False, cmap="magma", xticklabels=cols, yticklabels=rows)
     ax = sns.heatmap(filtered_r_squared, annot=np.round(filtered_r_squared, 2), fmt=".2f", cmap="viridis",
                      xticklabels=cols, yticklabels=rows, annot_kws={"size": 8, "color": "white"})
