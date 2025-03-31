@@ -95,13 +95,35 @@ def compare_caps(cap_set, compare_cap_set, n_perm = 40, metric='pearsonr', seed 
 # --------------------          Plot Comparisons          --------------------# 
 # ----------------------------------------------------------------------------# 
 
+from scipy.cluster.hierarchy import leaves_list, linkage
 
 def compare_CAP_heatmap(compare_r, compare_p, cap_label, compare_label, only_max=False, figsize=(5, 4)):
     """ """
     r_squared = compare_r ** 2
 
     mask = (compare_p >= 0.05) | (compare_r <= 0)
-    if not isinstance(only_max, bool) or only_max:
+
+    if only_max == "1-max":
+        max_indices = []
+        mask_indices = np.vstack(np.where(~mask)).T.tolist()
+
+        while len(mask_indices) > 0:
+
+            new_max_index = mask_indices[np.argmax([r_squared[i, j] for i, j in mask_indices])]
+            max_indices.append(new_max_index)
+
+            new_mask_indices = []
+            for mask_index in mask_indices:
+                if (new_max_index[0] != mask_index[0]) and (new_max_index[1] != mask_index[1]):
+                    new_mask_indices.append(mask_index)
+
+            mask_indices = new_mask_indices
+
+        mask = np.ones_like(r_squared, dtype=bool)
+        for i, j in max_indices:
+            mask[i, j] = False
+
+    elif not isinstance(only_max, bool) or only_max:
         row_max_r_squared = np.max(r_squared, axis=only_max * 1, keepdims=True)
         mask = mask | (r_squared < row_max_r_squared)
 
@@ -114,12 +136,15 @@ def compare_CAP_heatmap(compare_r, compare_p, cap_label, compare_label, only_max
     # Plotting the heatmap
     fig = plt.figure(figsize=figsize)
     # gs = sns.heatmap(filtered_r_squared, annot=False, cmap="magma", xticklabels=cols, yticklabels=rows)
+
     ax = sns.heatmap(filtered_r_squared, annot=np.round(filtered_r_squared, 2), fmt=".2f", cmap="viridis",
                      xticklabels=cols, yticklabels=rows, annot_kws={"size": 8, "color": "white"})
     plt.xlabel(f"{compare_label} CAP")
     plt.ylabel(f"{cap_label} CAP")
     plt.title("R² CAP State Comparisons")
     plt.show()
+
+    return filtered_r_squared
 
 
 # ----------------------------------------------------------------------------# 
