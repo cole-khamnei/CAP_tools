@@ -4,14 +4,16 @@ Uses consensus k-means + PAC score for optimal k identification to identify fMRI
 
 # Example Usage
 ```
-python CAP_tools/CAP_tools.py -c subject_*ciftis.ptseries.nii -o outdir/file_prefix -d subjects*dtseries.nii
+python CAP_tools/CAP_tools.py -c subject_*ciftis.ptseries.nii \
+                              -o outdir/file_prefix \
+                              -d subjects*dtseries.nii
 ```
 or using `.txt` files with each line being a path to file:
 
 ```
-python ../CAP_tools.py -c ptseries_cifti_paths_file.txt \
-                       -o output_files/test
-                       -d dtseries_cifti_paths_file.txt
+python CAP_toolsCAP_tools.py -c ptseries_cifti_paths_file.txt \
+                             -o output_files/test
+                             -d dtseries_cifti_paths_file.txt
 ```
 
 
