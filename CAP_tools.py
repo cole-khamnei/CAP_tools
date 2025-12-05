@@ -229,12 +229,13 @@ def main():
         dtseries_paths = pipeline.get_cifti_paths(args.dtseries)
         dtseries_paths = utils.cache_tmp_path(dtseries_paths, write_cache=True)
         template_dtseries = nb.load(dtseries_paths[0])
+        print(cifti_array.shape, CAP_labels.shape)
         dCAP_states = pipeline.create_dCAP_states(cifti_array, CAP_labels, dtseries_paths)
         utils.write_CAP_scalars(dCAP_states, save_paths["CAP_dscalar"], cifti=template_dtseries)
         # TODO: Add plotting functions for CAP states (frac occ, etc.)
 
         if not args.no_plots:
-            plots.create_CAP_state_plots(dCAP_states, CAP_labels, ROI_labels, template_dtseries,
+            plots.create_CAP_state_plots(dCAP_states, CAP_labels, None, template_dtseries,
                                              save_path=save_paths["dCAP_plot"])
 
         # TODO: Fix GLEW initialize error: most likely make plot CAP function

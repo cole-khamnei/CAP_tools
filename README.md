@@ -6,6 +6,11 @@
 # Example CAP States - DSCALARS
 ![Alt text](assets/dCAP_plot_example.png?raw=true "ISC Plot")
 
+# Example Usage
+```
+python CAP_tools/CAP_tools.py -c subject_*ciftis.ptseries.nii -o outdir/file_prefix -d subjects*dtseries.nii
+```
+
 
 <br><br>
 # Sources:
@@ -13,19 +18,4 @@
 
 
 # TODO:
-[] run on early cort data
 [] refactor __init__.py + any needed package structure
-
-
-
-Dynamics Paper TODOs:
-Schaefer400 +/- tasit topo
-
-up to 
-[] matches between CAP states in datasets - neuromaps spin
-
-possible:
-[] gradient plot of CAPs
-[] movie content (motion, etc) by CAP occupancy
-[] CAP polar plots
-[] 

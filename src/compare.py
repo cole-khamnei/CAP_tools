@@ -11,6 +11,8 @@ from tqdm.auto import tqdm
 import neuromaps as nm
 from neuromaps import images, nulls, stats
 
+from . import utils
+
 # ----------------------------------------------------------------------------# 
 # --------------------             Constants              --------------------# 
 # ----------------------------------------------------------------------------# 
@@ -22,8 +24,16 @@ CORTEX_RIGHT_LABEL = "CIFTI_STRUCTURE_CORTEX_RIGHT"
 # --------------------           Cifti Helpers            --------------------# 
 # ----------------------------------------------------------------------------# 
 
+def get_medial_wall_mask(example_cifti):
+    """ """
+    medial_wall_mask_values = utils.cifti_map(None, np.ones(59412), example_cifti)
+    medial_wall_mask_L = np.isnan(medial_wall_mask_values["left"])
+    medial_wall_mask_R = np.isnan(medial_wall_mask_values["right"])
+    medial_wall_mask_64k = np.hstack([medial_wall_mask_L, medial_wall_mask_R])
+    return medial_wall_mask_64k
 
-def load_dscalar_as_flat_gifti(cifti_path, n_vertex=32_492):
+
+def load_dscalar_as_flat_gifti(cifti_path, n_vertex=32_492, mask_medial_wall=False):
     """ """
     assert cifti_path.endswith(".dscalar.nii")
 
@@ -35,11 +45,20 @@ def load_dscalar_as_flat_gifti(cifti_path, n_vertex=32_492):
         if bm.brain_structure not in [CORTEX_LEFT_LABEL, CORTEX_RIGHT_LABEL]:
             continue
 
+        # TODO: SKIP OVER MEDIAL WALL
         assert bm.surface_number_of_vertices == n_vertex
 
         bm_data = data[:, bm.index_offset:bm.index_offset + bm.index_count]
         flat_bm_slice = slice(0, n_vertex) if bm.brain_structure == CORTEX_LEFT_LABEL else slice(n_vertex, None)
         flat_data[:, flat_bm_slice][:, bm.vertex_indices._indices] = bm_data
+
+    # if mask_medial_wall:
+    #     medial_wall_mask = get_medial_wall_mask(cifti)
+    #     flat_data[:, medial_wall_mask] = 0
+    #     print(flat_data.shape)
+    #     print(np.isnan(flat_data).mean())
+    #     print(medial_wall_mask)
+    #     print(np.isnan(medial_wall_mask).mean())
 
     return flat_data
 
