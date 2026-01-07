@@ -215,19 +215,16 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
     np.random.seed(seed)
     all_frames = np.vstack(cifti_array)
 
-    n_ciftis, fMRI_length, n_parcels = cifti_array.shape
     if cifti_sampling:
-        cifti_groupings = np.tile(np.arange(n_ciftis).reshape(-1, 1), (1, fMRI_length)).flatten()
+        cifti_groupings = np.hstack([[i] * len(arr) for i, arr in enumerate(cifti_array)])
     else:
-        cifti_sampling = None
+        cifti_groupings = None
 
     if ROI_subset is None:
         cluster_array = all_frames
     else:
         ROI_subset_index = np.where(np.isin(ROI_labels, ROI_subset))[0]
         cluster_array = all_frames[:, ROI_subset_index]
-
-    # ncluster_array = cluster_array / np.sqrt(np.sum(cluster_array ** 2, axis=1)).reshape(-1, 1)
 
     if set_k is None:
         CKM = ConsensusKMeans(kmax=kmax, kmin=kmin, n_reps=n_reps, p_features=p_features, p_events=p_events)
@@ -244,11 +241,9 @@ def find_CAP_states(cifti_array: np.ndarray, ROI_labels: List[str], ROI_subset: 
             fig.savefig(save_plot_path.format(k=set_k))
     else:
         print(colored(f"Using provided K={set_k}.", "yellow"))
-        # TODO: Create PAC minimum K selection plot
 
     np.random.seed(seed + 232)
     km = DistanceModifiedKMeans(dist=dist, n_clusters=set_k, max_iter=700, verbose=0, random_state=seed)
-    # km = KMeans(n_clusters=set_k, max_iter=700, verbose=0, random_state=seed)
     km.fit(cluster_array)
 
     CAP_states = []

@@ -5,6 +5,10 @@ import glob
 import nibabel as nb
 import numpy as np
 import dill as pickle
+import json
+import scipy.io as sio
+
+from termcolor import colored
 
 from src import constants
 from src import utils
@@ -132,6 +136,9 @@ def get_arguments(test_set: list = None):
     parser.add_argument('--dist', dest='distance_metric', action="store", type=str, required=False,
                         default="cosine", help="KMeans distance metric.")
 
+    parser.add_argument("--crop", dest='crop', type=int, nargs="?", const=True, default=False, required=False,
+                        help="Enable crop all ciftis to same length (can provide int for min crop size)")
+
     #TODO: Identify problems with GLEW library or find way to check (causes seg faults though :/  )
     parser.add_argument("--no-plots", dest='no_plots', action="store_true", default=False,
                         required=False, help="Specifies to skip plotting in case VTK/GLEW lib is messed up.")
@@ -166,19 +173,20 @@ def main():
 
     cifti_paths = utils.cache_tmp_path(cifti_paths)
 
+    print(colored(f"\nRunning CAP-tools pipeline: {args.out_path.split('/')[-1]}", "yellow"))
     if args.dry_run:
-        print("Dry run complete. Valid arguments given.")
+        print(colored("Dry run complete. Valid arguments given.", "yellow"))
         return
 
     if not args.overwrite and check_outputs_exist(save_paths):
-        print("Ouputs already exists. Terminating CAP-tools.")
+        print(colored("Ouputs already exists. Terminating CAP-tools.", "yellow"))
         return
 
     raw_cifti_data_array, ROI_labels = utils.load_cifti_arrays(cifti_paths, pbar=args.pbar)
 
-    preprocess_arguments = {"crop_length": 0} #TODO: Make this into real argparse with specific args
+    #TODO: Make this into real argparse with specific args
+    preprocess_arguments = {"crop": args.crop}
     cifti_array = pipeline.preprocess_cifti_array(raw_cifti_data_array, pbar=args.pbar, **preprocess_arguments)
-
     template_cifti = nb.load(cifti_paths[0])
 
     if args.isc_threshold:
@@ -195,7 +203,14 @@ def main():
         # TODO: create and output ISC dscalar
     elif args.ROI_subset_path:
         # TODO: Load in ROI subset from given dlabel
-        raise NotImplementedError
+        isc_df = []
+        if args.ROI_subset_path.endswith(".npy"):
+            ROI_subset = np.load(args.ROI_subset_path).astype(str)
+
+            assert all(r in ROI_labels for r in ROI_subset)
+
+        else:
+            raise NotImplementedError
     else:
         ROI_subset = None
         isc_df = []
@@ -211,13 +226,46 @@ def main():
                                                           min_opt_k=args.min_opt_k,
                                                           save_plot_path=save_paths["PAC_plot"])
 
-    k = len(CAP_states)
-    with open(save_paths["CAP_labels"].format(k=k), 'wb') as f:
-        np.save(f, CAP_labels.reshape(cifti_array.shape[0], -1))
+    ca_lengths = [len(ca) for ca in cifti_array]
+    CAP_labels_reshaped = [CAP_labels[sum(ca_lengths[:i]):sum(ca_lengths[:i + 1]) - 1]
+                           for i in range(len(ca_lengths))]
 
-    with open(save_paths["pkl"].format(k=k), 'wb') as file:
-        obj = [CAP_states, CAP_labels, isc_df, ROI_labels, cifti_paths]
+    CAP_labels_reshaped = [ca[:-i - 1] for i, ca in enumerate(CAP_labels_reshaped)]
+
+    FO_s, DT_s, TP_s = plots.calc_cap_stats(CAP_labels_reshaped)
+
+    pickle_path = save_paths["pkl"].format(k=len(CAP_states))
+    ROI_subset = ROI_labels if ROI_subset is None else ROI_subset
+    with open(pickle_path, 'wb') as file:
+        obj = dict(
+                cifti_paths=cifti_paths,
+                CAP_states=CAP_states,
+                CAP_labels=CAP_labels_reshaped,
+                CAP_labels_flat=CAP_labels,
+                isc_df=isc_df,
+                ROI_labels=ROI_labels,
+                ROI_subset=ROI_subset,
+                FO_s=FO_s,
+                DT_s=DT_s,
+                TP_s=TP_s
+            )
         pickle.dump(obj, file)
+
+    # with open(pickle_path.replace(".pkl", ".json"), "w", encoding="utf-8") as file:
+    #     json_data = dict(
+    #         cifti_paths=list(cifti_paths),
+    #         CAP_states=utils.to_serializable(CAP_states, float),
+    #         CAP_labels=utils.to_serializable(CAP_states, int),
+    #         ROI_labels=utils.to_serializable(ROI_labels, str),
+    #         ROI_subset=utils.to_serializable(ROI_subset, str),
+    #         FO_s=utils.to_serializable(FO_s, float),
+    #         DT_s=utils.to_serializable(DT_s, float),
+    #         TP_s=utils.to_serializable(TP_s, float),
+    #         )
+    #     json.dump(json_data, file, indent=4, ensure_ascii=False)
+
+
+    sio.savemat(pickle_path.replace(".pkl", ".mat"), obj)
 
     utils.write_CAP_scalars(CAP_states, save_paths["CAP_pscalar"], cifti=template_cifti)
     # TODO: Add plotting functions for CAP states (frac occ, etc.)
@@ -229,10 +277,9 @@ def main():
         dtseries_paths = pipeline.get_cifti_paths(args.dtseries)
         dtseries_paths = utils.cache_tmp_path(dtseries_paths, write_cache=True)
         template_dtseries = nb.load(dtseries_paths[0])
-        print(cifti_array.shape, CAP_labels.shape)
-        dCAP_states = pipeline.create_dCAP_states(cifti_array, CAP_labels, dtseries_paths)
+        dCAP_states = pipeline.create_dCAP_states(cifti_array, CAP_labels_reshaped, dtseries_paths)
         utils.write_CAP_scalars(dCAP_states, save_paths["CAP_dscalar"], cifti=template_dtseries)
-        # TODO: Add plotting functions for CAP states (frac occ, etc.)
+        # TODO: Add plotting functions for` CAP states (frac occ, etc.)
 
         if not args.no_plots:
             plots.create_CAP_state_plots(dCAP_states, CAP_labels, None, template_dtseries,
@@ -244,6 +291,7 @@ def main():
     save_params(save_paths, args)
     # IF .params file does not exist, then program did not finish correctly.
 
+    print(colored("Finished CAP-tools pipeline.\n", "yellow"))
 
 if __name__ == '__main__':
     main()

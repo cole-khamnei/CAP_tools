@@ -20,8 +20,11 @@ def get_directory_size(path):
     return int(result.stdout.split()[0]) / 2 ** 21
 
 
-def cache_tmp_path(path, use_cache=True, write_cache=True):
+def cache_tmp_path(path, use_cache=False, write_cache=True):
     """ """
+    if not use_cache:
+        return path
+
     if not isinstance(path, str):
         return [cache_tmp_path(path_i, use_cache=use_cache, write_cache=write_cache)
                 for path_i in tqdm(path, desc="Caching paths in ~/_tmp")]
@@ -140,23 +143,23 @@ def load_cifti_arrays(cifti_paths: List[str], pbar: bool = True) -> Tuple[np.nda
         cifti = nb.load(cifti_path)
         raw_cifti_data_array.append(cifti.get_fdata())
 
-    array_lengths = [len(obj) for obj in raw_cifti_data_array]
-
-    # TODO: add error handling for short arrays
-    if any(array_lengths[0] != a_len for a_len in array_lengths):
-        print("Arrays of different lengths: cropping to minimum size.")
-        min_length = np.min(array_lengths)
-        if np.median(array_lengths) * 0.70 > np.min(array_lengths):
-            print(f"WARNING: shortest array ({np.min(array_lengths)}) is less than 70% of median.")
-            assert False
-
-        raw_cifti_data_array = [arr[:min_length] for arr in raw_cifti_data_array]
-
-    raw_cifti_data_array = np.array(raw_cifti_data_array)
     ROI_labels = [label for label, _, index in cifti.header.get_axis(1)]
 
     return raw_cifti_data_array, ROI_labels
 
+
+def to_serializable(obj, dtype=int):
+    """ """
+    if obj is None:
+        return None
+
+    if isinstance(obj, (float, int, str, bool)):
+        return dtype(obj)
+
+    if len(obj) and not isinstance(obj, str):
+        return [to_serializable(obj_i, dtype) for obj_i in obj]
+
+    return dtype(obj)
 
 # ----------------------------------------------------------------------------# 
 # --------------------                End                 --------------------# 

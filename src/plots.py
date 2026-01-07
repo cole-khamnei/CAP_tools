@@ -191,7 +191,31 @@ def CAP_occupancy_timeseries(CAP_labels, analysis_label, save_path=None):
         fig.savefig(save_path)
 
 
+def calc_flat_dwell_time(CAP_labels_flat, n_caps):
+    """ """
+    z = (CAP_labels_flat == np.arange(n_caps).reshape(-1, 1)) * 1
+    b = (z[:, :-1] * z[:, 1:]).astype(str)
 
+    sequences = [[len(l) for l in "".join(b_i).split("0") if len(l)] for b_i in b]
+    return [np.mean(r) if len(r) else 0 for r in sequences]
+
+
+def calc_flat_transition_probabilities(CAP_labels_flat, n_caps):
+    """ """
+    z = CAP_labels_flat == np.arange(n_caps).reshape(-1, 1)
+    return np.array([[np.mean(cl1 * cl2) for cl1 in z[:, 1:]] for cl2 in z[:, :-1]])
+
+
+def calc_cap_stats(CAP_labels_reshaped):
+    """ """
+    CAP_labels_flat = np.hstack(CAP_labels_reshaped)
+    n_caps = np.max(np.hstack(CAP_labels_reshaped))
+
+    TP_s = np.array([calc_flat_transition_probabilities(CL_ri, n_caps) for CL_ri in CAP_labels_reshaped])
+    DT_s = np.array([calc_flat_dwell_time(CL_ri, n_caps) for CL_ri in CAP_labels_reshaped])
+    FO_s = np.array([np.mean(CL_ri == np.arange(n_caps).reshape(-1, 1), axis=1) for CL_ri in CAP_labels_reshaped])
+
+    return FO_s, DT_s, TP_s
 
 # ----------------------------------------------------------------------------# 
 # --------------------                END                 --------------------# 

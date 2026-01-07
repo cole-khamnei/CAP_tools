@@ -48,7 +48,7 @@ def get_cifti_paths(cifti_argument: List[str]) -> List[str]:
     raise NotImplementedError("Control flow should not get here.")
 
 
-def preprocess_cifti_array(raw_cifti_data_array: np.ndarray,
+def preprocess_cifti_array(raw_cifti_data_array: np.ndarray, crop=False,
                            **preprocess_arguments) -> np.ndarray:
     """ """
     print(color_str("Preprocessing CIFTI data array: ...", "blue"), end="\r")
@@ -59,20 +59,22 @@ def preprocess_cifti_array(raw_cifti_data_array: np.ndarray,
 
     array_lengths = [len(obj) for obj in raw_cifti_data_array]
 
-    # TODO: add error handling for short arrays
-    if any(array_lengths[0] != a_len for a_len in array_lengths):
-        print("Arrays of different lengths: cropping to minimum size.")
-        min_length = np.min(array_lengths)
+    if crop:
+        print(f"Cropping {len(raw_cifti_data_array)} ciftis.")
+        min_length = np.min(array_lengths) if isinstance(crop, bool) else crop
         if np.median(array_lengths) * 0.70 > np.min(array_lengths):
             print(f"WARNING: shortest array ({np.min(array_lengths)}) is less than 70% of median.")
             assert False
 
-        processed_cifti_data_array = np.array([arr[:min_length] for arr in raw_cifti_data_array])
+        processed_cifti_data_array = [arr[:min_length] for arr in raw_cifti_data_array]
 
     else:
+        if any(array_lengths[0] != a_len for a_len in array_lengths):
+            print("Warning: provided ciftis are different lengths (can use '--crop' to specify crop size')")
+
         processed_cifti_data_array = raw_cifti_data_array
 
-    assert not np.any(np.isnan(processed_cifti_data_array))
+    assert not any([np.any(np.isnan(ca)) for ca in processed_cifti_data_array])
 
     print(color_str("Preprocessing CIFTI data array: Done", "blue"))
     return processed_cifti_data_array
@@ -99,33 +101,28 @@ def ISC_subset(cifti_array: np.ndarray,
     isc_df = pd.DataFrame(isc_df)
     isc_thres_df = isc_df.query(f"isc >= {isc_threshold}")
 
-    # TODO: Add ISC thresholding Plots:
-
     assert len(isc_thres_df) > 0, f"ISC threshold = {isc_threshold} led to zero ROIs, lower threshold."
     return np.sort(isc_thres_df["roi"].values), isc_df
 
 
-def create_dCAP_states(cifti_array: np.ndarray, CAP_labels: np.ndarray,
+def create_dCAP_states(cifti_array: np.ndarray, CAP_labels_reshaped: list,
                        dtseries_paths: List[str], pbar: bool = True,
                             ) -> np.ndarray:
     """ """
 
-    assert cifti_array.shape[0] == len(dtseries_paths), "Incorrect number of dtseries provided."
-    assert CAP_labels.shape[0] == np.prod(cifti_array.shape[:2]), "CAP labels shape incorrect."
+    assert len(cifti_array) == len(dtseries_paths), "Incorrect number of dtseries provided."
 
-    N_ciftis, N_TRs, N_rois = cifti_array.shape
     DT_VOXEL_NUMBER = len(nb.load(dtseries_paths[0]).header.get_axis(1))
 
-    CAP_labels = CAP_labels.reshape(N_ciftis, N_TRs)
-    CAP_state_nums = np.sort(np.unique(CAP_labels))
+    CAP_state_nums = np.sort(np.unique(np.hstack(CAP_labels_reshaped).ravel()))
 
     dCAP_states = {state_i: np.zeros(DT_VOXEL_NUMBER) for state_i in CAP_state_nums}
     dCAP_state_norms = {state_i: 0 for state_i in CAP_state_nums}
 
     if pbar:
-        pbar = tqdm(total=N_ciftis, desc=color_str("Creating CAP State dscalars", "blue"), colour="blue")
+        pbar = tqdm(total=len(cifti_array), desc=color_str("Creating CAP State dscalars", "blue"), colour="blue")
 
-    for dtseries_path, cifti_CAP_labels in zip(dtseries_paths, CAP_labels):
+    for dtseries_path, cifti_CAP_labels in zip(dtseries_paths, CAP_labels_reshaped):
         dtseries_cifti = nb.load(dtseries_path)
         dtseries_data = dtseries_cifti.get_fdata()
 
