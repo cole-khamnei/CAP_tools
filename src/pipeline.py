@@ -107,6 +107,7 @@ def ISC_subset(cifti_array: np.ndarray,
 
 def create_dCAP_states(cifti_array: np.ndarray, CAP_labels_reshaped: list,
                        dtseries_paths: List[str], pbar: bool = True,
+                       crop_slices: List[str] = [],
                             ) -> np.ndarray:
     """ """
 
@@ -125,6 +126,13 @@ def create_dCAP_states(cifti_array: np.ndarray, CAP_labels_reshaped: list,
     for dtseries_path, cifti_CAP_labels in zip(dtseries_paths, CAP_labels_reshaped):
         dtseries_cifti = nb.load(dtseries_path)
         dtseries_data = dtseries_cifti.get_fdata()
+
+        if len(crop_slices) > 0:
+            c_index = np.ones(len(dtseries_data), dtype=bool)
+            for cl in crop_slices:
+                c_index[cl] = False
+            dtseries_data = dtseries_data[c_index]
+
 
         for state_i in CAP_state_nums:
             cifti_CAP_i_index = cifti_CAP_labels == state_i

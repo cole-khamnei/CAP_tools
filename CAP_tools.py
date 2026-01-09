@@ -62,9 +62,10 @@ def create_save_paths(args):
     return save_paths
 
 
-def save_params(save_paths, args):
+def save_params(save_paths, args, k):
     """ """
-    with open(save_paths["params"], "w") as param_file:
+    param_path = save_paths["params"].replace("_states", f"_state_K{k}")
+    with open(param_path, "w") as param_file:
         param_file.write(f"title :: {args.title}\n")
         for k, v in vars(args).items():
             if k in ["ciftis", "dtseries", "title"]:
@@ -139,6 +140,9 @@ def get_arguments(test_set: list = None):
     parser.add_argument("--crop", dest='crop', type=int, nargs="?", const=True, default=False, required=False,
                         help="Enable crop all ciftis to same length (can provide int for min crop size)")
 
+    parser.add_argument("--crop-slice", dest='crop_slices', type=str, action="extend", nargs="+", default=[],
+                        help="Enable crop all ciftis to same length (can provide int for min crop size)")
+
     #TODO: Identify problems with GLEW library or find way to check (causes seg faults though :/  )
     parser.add_argument("--no-plots", dest='no_plots', action="store_true", default=False,
                         required=False, help="Specifies to skip plotting in case VTK/GLEW lib is messed up.")
@@ -156,6 +160,10 @@ def get_arguments(test_set: list = None):
 
     args.pbar = args.verbose > 0
     args.title = args.title or os.path.basename(args.out_path)
+
+    # if len(args.crop_slices):
+    args.crop_slices = [slice(*(None if i == "E" else int(i) for i in cl.replace("e", "-").split(":")))
+                for cl in args.crop_slices]
 
     return args
 
@@ -182,7 +190,8 @@ def main():
         print(colored("Ouputs already exists. Terminating CAP-tools.", "yellow"))
         return
 
-    raw_cifti_data_array, ROI_labels = utils.load_cifti_arrays(cifti_paths, pbar=args.pbar)
+    raw_cifti_data_array, ROI_labels = utils.load_cifti_arrays(cifti_paths, pbar=args.pbar,
+                                                               crop_slices=args.crop_slices)
 
     #TODO: Make this into real argparse with specific args
     preprocess_arguments = {"crop": args.crop}
@@ -227,10 +236,8 @@ def main():
                                                           save_plot_path=save_paths["PAC_plot"])
 
     ca_lengths = [len(ca) for ca in cifti_array]
-    CAP_labels_reshaped = [CAP_labels[sum(ca_lengths[:i]):sum(ca_lengths[:i + 1]) - 1]
+    CAP_labels_reshaped = [CAP_labels[sum(ca_lengths[:i]):sum(ca_lengths[:i + 1])]
                            for i in range(len(ca_lengths))]
-
-    CAP_labels_reshaped = [ca[:-i - 1] for i, ca in enumerate(CAP_labels_reshaped)]
 
     FO_s, DT_s, TP_s = plots.calc_cap_stats(CAP_labels_reshaped)
 
@@ -251,20 +258,6 @@ def main():
             )
         pickle.dump(obj, file)
 
-    # with open(pickle_path.replace(".pkl", ".json"), "w", encoding="utf-8") as file:
-    #     json_data = dict(
-    #         cifti_paths=list(cifti_paths),
-    #         CAP_states=utils.to_serializable(CAP_states, float),
-    #         CAP_labels=utils.to_serializable(CAP_states, int),
-    #         ROI_labels=utils.to_serializable(ROI_labels, str),
-    #         ROI_subset=utils.to_serializable(ROI_subset, str),
-    #         FO_s=utils.to_serializable(FO_s, float),
-    #         DT_s=utils.to_serializable(DT_s, float),
-    #         TP_s=utils.to_serializable(TP_s, float),
-    #         )
-    #     json.dump(json_data, file, indent=4, ensure_ascii=False)
-
-
     sio.savemat(pickle_path.replace(".pkl", ".mat"), obj)
 
     utils.write_CAP_scalars(CAP_states, save_paths["CAP_pscalar"], cifti=template_cifti)
@@ -277,7 +270,8 @@ def main():
         dtseries_paths = pipeline.get_cifti_paths(args.dtseries)
         dtseries_paths = utils.cache_tmp_path(dtseries_paths, write_cache=True)
         template_dtseries = nb.load(dtseries_paths[0])
-        dCAP_states = pipeline.create_dCAP_states(cifti_array, CAP_labels_reshaped, dtseries_paths)
+        dCAP_states = pipeline.create_dCAP_states(cifti_array, CAP_labels_reshaped, dtseries_paths,
+                                                  crop_slices=args.crop_slices)
         utils.write_CAP_scalars(dCAP_states, save_paths["CAP_dscalar"], cifti=template_dtseries)
         # TODO: Add plotting functions for` CAP states (frac occ, etc.)
 
@@ -288,7 +282,7 @@ def main():
         # TODO: Fix GLEW initialize error: most likely make plot CAP function
         # that works on outputs of CAPs
 
-    save_params(save_paths, args)
+    save_params(save_paths, args, len(CAP_states))
     # IF .params file does not exist, then program did not finish correctly.
 
     print(colored("Finished CAP-tools pipeline.\n", "yellow"))

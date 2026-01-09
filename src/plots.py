@@ -209,7 +209,7 @@ def calc_flat_transition_probabilities(CAP_labels_flat, n_caps):
 def calc_cap_stats(CAP_labels_reshaped):
     """ """
     CAP_labels_flat = np.hstack(CAP_labels_reshaped)
-    n_caps = np.max(np.hstack(CAP_labels_reshaped))
+    n_caps = np.max(np.hstack(CAP_labels_reshaped)) + 1
 
     TP_s = np.array([calc_flat_transition_probabilities(CL_ri, n_caps) for CL_ri in CAP_labels_reshaped])
     DT_s = np.array([calc_flat_dwell_time(CL_ri, n_caps) for CL_ri in CAP_labels_reshaped])

@@ -20,16 +20,14 @@ def get_directory_size(path):
     return int(result.stdout.split()[0]) / 2 ** 21
 
 
-def cache_tmp_path(path, use_cache=False, write_cache=True):
+def cache_tmp_path(path, use_cache=True, write_cache=True):
     """ """
-    if not use_cache:
-        return path
 
     if not isinstance(path, str):
         return [cache_tmp_path(path_i, use_cache=use_cache, write_cache=write_cache)
-                for path_i in tqdm(path, desc="Caching paths in ~/_tmp")]
+                for path_i in tqdm(path, desc="Caching paths in ~/_tmp", leave=False)]
 
-    if not use_cache:
+    if not use_cache or not os.path.exists(os.path.expanduser("~/_tmp")):
         return path
 
     # TODO: builtin hash is non-deterministic, use hashlib or z-adler if want hashed option
@@ -128,7 +126,9 @@ def write_CAP_scalars(CAP_states: np.ndarray, save_path: str,
     print(color_str(f"Writing CAP {file_ext}: Done ", "blue"))
 
 
-def load_cifti_arrays(cifti_paths: List[str], pbar: bool = True) -> Tuple[np.ndarray, List[str]]:
+def load_cifti_arrays(cifti_paths: List[str], pbar: bool = True,
+                      crop_slices: List[str] = [],
+                     ) -> Tuple[np.ndarray, List[str]]:
     """ """
 
     if pbar:
@@ -141,7 +141,15 @@ def load_cifti_arrays(cifti_paths: List[str], pbar: bool = True) -> Tuple[np.nda
     raw_cifti_data_array = []
     for cifti_path in cifti_iter:
         cifti = nb.load(cifti_path)
-        raw_cifti_data_array.append(cifti.get_fdata())
+        cifti_data = cifti.get_fdata()
+
+        if len(crop_slices) > 0:
+            c_index = np.ones(len(cifti_data), dtype=bool)
+            for cl in crop_slices:
+                c_index[cl] = False
+            cifti_data = cifti_data[c_index]
+
+        raw_cifti_data_array.append(cifti_data)
 
     ROI_labels = [label for label, _, index in cifti.header.get_axis(1)]
 

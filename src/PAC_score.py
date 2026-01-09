@@ -11,7 +11,7 @@ try:
     # TODO: Consider breaking out into separate script so torch isnt loaded always
     # TODO: Clean up
     TORCH_AVAILABLE = True
-    print(colored("Torch found, using as backend for CAP_state.ConsensusKMeans.", "yellow"))
+    # print(colored("Torch found, using as backend for CAP_state.ConsensusKMeans.", "yellow"))
 except ModuleNotFoundError as e:
     TORCH_AVAILABLE = False
     print(colored("Torch package not found. Defaulting to numpy.", "yellow"))
